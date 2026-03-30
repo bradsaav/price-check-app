@@ -20,6 +20,11 @@ export default function HomeScreen() {
           label="Start In-Store Mode"
           onPress={() => router.push("/in-store")}
         />
+
+        <PrimaryButton
+          label="View History"
+          onPress={() => router.push("/history")}
+        />
       </View>
     </Screen>
   );

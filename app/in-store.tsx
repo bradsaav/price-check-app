@@ -6,6 +6,7 @@ import Screen from "../components/Screen";
 import { mockProducts } from "../data/mockProducts";
 import type { Offer } from "../types";
 import { getRecommendation } from "../utils/recommendation";
+import { savePriceCheck } from "../utils/storage";
 
 function findProduct(query: string) {
   const normalized = query.trim().toLowerCase();
@@ -20,7 +21,10 @@ export default function InStoreScreen() {
   const [query, setQuery] = useState("");
   const [currentPrice, setCurrentPrice] = useState("");
   const [error, setError] = useState("");
+  const [saveMessage, setSaveMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const [result, setResult] = useState<null | {
+    upc: string;
     name: string;
     offers: Offer[];
     recommendation: string;
@@ -29,6 +33,8 @@ export default function InStoreScreen() {
 
   function handleCompare() {
     setError("");
+    setSaveMessage("");
+
     const product = findProduct(query);
     const price = Number(currentPrice);
 
@@ -45,11 +51,40 @@ export default function InStoreScreen() {
     }
 
     setResult({
+      upc: product.upc,
       name: product.name,
       offers: product.offers,
       recommendation: getRecommendation(price, product.offers),
       currentPrice: price,
     });
+  }
+
+  async function handleSave() {
+    if (!result || isSaving) {
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setSaveMessage("");
+
+      await savePriceCheck({
+        id: Date.now().toString(),
+        upc: result.upc,
+        name: result.name,
+        currentPrice: result.currentPrice,
+        offers: result.offers,
+        recommendation: result.recommendation,
+        createdAt: new Date().toISOString(),
+      });
+
+      setSaveMessage("Item saved locally.");
+    } catch (error) {
+      console.error("Save failed:", error);
+      setSaveMessage("Could not save item.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -90,6 +125,15 @@ export default function InStoreScreen() {
         <PrimaryButton label="Compare Prices" onPress={handleCompare} />
 
         {error ? <Text style={{ color: "crimson" }}>{error}</Text> : null}
+        {saveMessage ? (
+          <Text
+            style={{
+              color: saveMessage.includes("Could not") ? "crimson" : "green",
+            }}
+          >
+            {saveMessage}
+          </Text>
+        ) : null}
 
         {result && (
           <View style={{ marginTop: 16, gap: 12 }}>
@@ -112,6 +156,11 @@ export default function InStoreScreen() {
               <Text style={{ fontWeight: "700" }}>Recommendation</Text>
               <Text>{result.recommendation}</Text>
             </View>
+
+            <PrimaryButton
+              label={isSaving ? "Saving..." : "Save Item"}
+              onPress={handleSave}
+            />
 
             {result.offers.map((offer) => (
               <View
