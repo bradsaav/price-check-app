@@ -9,6 +9,7 @@ export default function RootLayout() {
     >
       <Stack.Screen name="index" options={{ title: "Home" }} />
       <Stack.Screen name="in-store" options={{ title: "In-Store Mode" }} />
+      <Stack.Screen name="history" options={{ title: "History" }} />
     </Stack>
   );
 }

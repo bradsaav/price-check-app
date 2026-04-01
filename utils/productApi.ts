@@ -1,23 +1,38 @@
+const BASE_URL = "http://192.168.1.37:3001";
+
 export async function fetchProductByUpc(upc: string) {
-  const url = `https://price-check-app-pi.vercel.app/api/product-lookup?upc=${encodeURIComponent(upc)}`;
-
   try {
-    console.log("Fetching UPC from:", url);
-
-    const response = await fetch(url);
-
-    console.log("Response status:", response.status);
+    const response = await fetch(
+      `${BASE_URL}/api/product-lookup?upc=${encodeURIComponent(upc)}`,
+    );
 
     const text = await response.text();
-    console.log("Raw response:", text);
 
-    if (!response.ok) {
-      return null;
+    let parsed: any = null;
+
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      return {
+        ok: false,
+        error: "Backend returned invalid JSON",
+      };
     }
 
-    return JSON.parse(text);
-  } catch (error) {
+    if (!response.ok || !parsed?.ok) {
+      return {
+        ok: false,
+        error: parsed?.error || `HTTP ${response.status}`,
+      };
+    }
+
+    return parsed;
+  } catch (error: any) {
     console.error("Product lookup failed:", error);
-    return null;
+
+    return {
+      ok: false,
+      error: error?.message || "Network request failed",
+    };
   }
 }

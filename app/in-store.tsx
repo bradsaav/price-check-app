@@ -6,6 +6,7 @@ import PrimaryButton from "../components/PrimaryButton";
 import Screen from "../components/Screen";
 import { mockProducts } from "../data/mockProducts";
 import type { Offer } from "../types";
+import { fetchProductByUpc } from "../utils/productApi";
 import { getRecommendation } from "../utils/recommendation";
 import { savePriceCheck } from "../utils/storage";
 
@@ -37,7 +38,7 @@ export default function InStoreScreen() {
     currentPrice: number;
   }>(null);
 
-  function handleCompare() {
+  async function handleCompare() {
     setError("");
     setSaveMessage("");
 
@@ -53,6 +54,52 @@ export default function InStoreScreen() {
     if (!currentPrice || Number.isNaN(price) || price <= 0) {
       setResult(null);
       setError("Enter a valid current store price.");
+      return;
+    }
+
+    const isLikelyUpc = /^\d{8,14}$/.test(trimmedQuery);
+
+    if (isLikelyUpc) {
+      const apiResult = await fetchProductByUpc(trimmedQuery);
+
+      if (!apiResult.ok) {
+        const fallbackProduct = findProduct(trimmedQuery);
+
+        if (!fallbackProduct) {
+          setResult(null);
+          setError(`Lookup failed: ${apiResult.error}`);
+          return;
+        }
+
+        setResult({
+          upc: fallbackProduct.upc,
+          name: fallbackProduct.name,
+          offers: fallbackProduct.offers,
+          recommendation: getRecommendation(price, fallbackProduct.offers),
+          currentPrice: price,
+        });
+
+        setError("");
+        return;
+      }
+
+      const apiProduct = apiResult.data;
+
+      const offers = [
+        { retailer: "Amazon", price: 189.99, fulfillment: "Online" },
+        { retailer: "Walmart", price: 199.0, fulfillment: "Pickup" },
+        { retailer: "Target", price: 194.99, fulfillment: "In Store" },
+      ];
+
+      setResult({
+        upc: apiProduct.upc || trimmedQuery,
+        name: apiProduct.name || "Unknown Product",
+        offers,
+        recommendation: getRecommendation(price, offers),
+        currentPrice: price,
+      });
+
+      setError("");
       return;
     }
 
@@ -225,7 +272,13 @@ export default function InStoreScreen() {
 
         <PrimaryButton label="Compare Prices" onPress={handleCompare} />
 
-        {error ? <Text style={{ color: "crimson" }}>{error}</Text> : null}
+        {error ? (
+          <Text
+            style={{ color: error.startsWith("Scanned") ? "#444" : "crimson" }}
+          >
+            {error}
+          </Text>
+        ) : null}
 
         {saveMessage ? (
           <Text

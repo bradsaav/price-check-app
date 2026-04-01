@@ -1,4 +1,4 @@
-import { PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
 import { SafeAreaView, View } from "react-native";
 
 export default function Screen({ children }: PropsWithChildren) {

@@ -9,3 +9,12 @@ export type Product = {
   name: string;
   offers: Offer[];
 };
+export type SavedPriceCheck = {
+  id: string;
+  upc: string;
+  name: string;
+  currentPrice: number;
+  offers: Offer[];
+  recommendation: string;
+  createdAt: string;
+};
