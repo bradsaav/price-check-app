@@ -1,7 +1,7 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { ScrollView, Text, TextInput, View } from "react-native";
+import { Image, ScrollView, Text, TextInput, View } from "react-native";
 import PrimaryButton from "../components/PrimaryButton";
 import Screen from "../components/Screen";
 import { mockProducts } from "../data/mockProducts";
@@ -33,6 +33,7 @@ export default function InStoreScreen() {
   const [result, setResult] = useState<null | {
     upc: string;
     name: string;
+    image?: string | null;
     offers: Offer[];
     recommendation: string;
     currentPrice: number;
@@ -74,6 +75,7 @@ export default function InStoreScreen() {
         setResult({
           upc: fallbackProduct.upc,
           name: fallbackProduct.name,
+          image: null,
           offers: fallbackProduct.offers,
           recommendation: getRecommendation(price, fallbackProduct.offers),
           currentPrice: price,
@@ -94,6 +96,7 @@ export default function InStoreScreen() {
       setResult({
         upc: apiProduct.upc || trimmedQuery,
         name: apiProduct.name || "Unknown Product",
+        image: apiProduct.image || null,
         offers,
         recommendation: getRecommendation(price, offers),
         currentPrice: price,
@@ -114,6 +117,7 @@ export default function InStoreScreen() {
     setResult({
       upc: product.upc,
       name: product.name,
+      image: null,
       offers: product.offers,
       recommendation: getRecommendation(price, product.offers),
       currentPrice: price,
@@ -292,6 +296,29 @@ export default function InStoreScreen() {
 
         {result && (
           <View style={{ marginTop: 16, gap: 12 }}>
+            {result.image ? (
+              <View
+                style={{
+                  width: "100%",
+                  height: 180,
+                  borderRadius: 12,
+                  backgroundColor: "#f3f3f3",
+                  overflow: "hidden",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Image
+                  source={{ uri: result.image }}
+                  style={{
+                    width: "92%",
+                    height: "92%",
+                  }}
+                  resizeMode="contain"
+                />
+              </View>
+            ) : null}
+
             <Text style={{ fontSize: 22, fontWeight: "700" }}>
               {result.name}
             </Text>
